@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facecomp</title>
+  <style>
+    :root{--bg:#f7f7f8;--card:#ffffff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--accent:#111827;}
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:linear-gradient(#fafafa,#fff);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .header{position:sticky;top:0;backdrop-filter:saturate(180%) blur(8px);background:rgba(255,255,255,.8);border-bottom:1px solid var(--border);z-index:10}
+    .row{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.row{grid-template-columns:1fr 1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:12px;cursor:pointer;transition:transform .2s ease}
+    .card:hover{transform:scale(1.03)}
+    .imgwrap{position:relative;width:100%;padding-top:75%;overflow:hidden;border-radius:14px;background:#e5e7eb} /* 🔽 4x3 va kichraytirilgan */
+    .imgwrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .25s ease}
+    .imgwrap img:active{opacity:.7}
+    .muted{color:var(--muted);font-size:12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#111;cursor:pointer;font-weight:600}
+    .tab.active{background:#111;color:#fff;border-color:#111}
+    .rowline{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid var(--border)}
+    .pill{border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-variant-numeric:tabular-nums}
+    .title{margin:0;font-size:18px}
+    .lead{font-size:14px;color:var(--muted)}
+    .grid{display:grid;gap:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    input[type=text]{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);outline:none}
+    input[type=text]:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+    .footer{padding:32px 0;text-align:center;color:var(--muted);font-size:12px}
+    .rank{width:24px;text-align:right;color:#6b7280;font-variant-numeric:tabular-nums}
+    .avatar{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--border)}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800">FM</div>
+        <div>
+          <h1 class="title">Facecomp</h1>
+          <div class="lead">Ushbu saytda siz ovoz berishingiz mumkin berishingiz mumkin</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="tab active" data-tab="play">Ovoz berish</button>
+        <button class="tab" data-tab="leaderboard">Liderlar</button>
+        <button class="tab" data-tab="add">Yangi profil</button>
+        <button id="resetBtn" class="tab">Qayta o'rnatish</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:24px 16px 8px">
+    <!-- PLAY TAB -->
+    <section id="tab-play">
+      <p class="lead" style="text-align:center;margin:0 0 14px">Savol:
+        <strong>Qaysi biri ko'proq yoqadi?</strong> Tanlovingiz Elo reytingiga ta'sir qiladi.</p>
+      <div class="row">
+        <!-- Left -->
+        <div class="card">
+          <div class="imgwrap"><img id="imgA" alt=""></div>
+          <div class="rowline">
+            <div>
+              <div id="nameA" style="font-weight:700"></div>
+              <div class="muted">Elo: <span id="eloA"></span> · O'yinlar: <span id="gamesA"></span> · G'alaba: <span id="winsA"></span></div>
+            </div>
+            <button id="voteLeft" class="btn">← Shu</button>
+          </div>
+        </div>
+        <!-- Right -->
+        <div class="card">
+          <div class="imgwrap"><img id="imgB" alt=""></div>
+          <div class="rowline">
+            <div>
+              <div id="nameB" style="font-weight:700"></div>
+              <div class="muted">Elo: <span id="eloB"></span> · O'yinlar: <span id="gamesB"></span> · G'alaba: <span id="winsB"></span></div>
+            </div>
+            <button id="voteRight" class="btn">Shu →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD TAB -->
+    <section id="tab-leaderboard" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="rowline" style="border-top:0">
+          <div style="font-weight:700">Reyting jadvali</div>
+          <div class="muted">Jami: <span id="countProfiles">0</span> ta profil</div>
+        </div>
+        <div id="leaderRows"></div>
+      </div>
+    </section>
+
+    <!-- ADD TAB -->
+    <section id="tab-add" style="display:none">
+      <div class="card">
+        <h2 style="margin:0 0 12px;font-size:18px">Yangi profil qo'shish</h2>
+        <form id="addForm" class="grid">
+          <div class="grid2">
+            <div>
+              <label class="muted">Ism</label>
+              <input type="text" name="name" placeholder="Masalan: Ali">
+            </div>
+            <div>
+              <label class="muted">Rasm URL</label>
+              <input type="text" name="img" placeholder="https://...">
+            </div>
+          </div>
+          <div class="muted">Eslatma: faqat rozilik bilan yuklang. Mualliflik va maxfiylik qoidalariga rioya qiling.</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" type="submit">Qo'shish</button>
+            <button class="btn btn-outline" type="button" id="cancelAdd">Bekor qilish</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">O'z tanlovingiz o'z qolingizda. © <span id="yr"></span></div>
+
+  <script>
+    // ======= Ma'lumotlar =======
+    const STARTERS = [
+      { id: "1", name: "Alex",   img: "https://picsum.photos/id/1005/600/800" },
+      { id: "2", name: "Sam",    img: "https://picsum.photos/id/1011/600/800" },
+      { id: "3", name: "Jordan", img: "https://picsum.photos/id/1012/600/800" },
+      { id: "4", name: "Taylor", img: "https://picsum.photos/id/1015/600/800" },
+      { id: "5", name: "Riley",  img: "https://picsum.photos/id/1027/600/800" },
+      { id: "6", name: "Casey",  img: "https://picsum.photos/id/1021/600/800" },
+      { id: "7", name: "Jamie",  img: "https://picsum.photos/id/1024/600/800" },
+      { id: "8", name: "Morgan", img: "https://picsum.photos/id/1001/600/800" },
+      { id: "9", name: "Drew",   img: "https://picsum.photos/id/1002/600/800" },
+      { id: "10", name: "Parker",img: "https://picsum.photos/id/1003/600/800" },
+      { id: "11", name: "Quinn", img: "https://picsum.photos/id/1004/600/800" },
+      { id: "12", name: "Avery", img: "https://picsum.photos/id/1006/600/800" }
+    ];
+    const STORAGE_KEY = "facemash_html_profiles_v1";
+
+    function loadProfiles(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return STARTERS.map(s=>({...s, rating:1200, games:0, wins:0}));
+        const parsed = JSON.parse(raw);
+        return parsed.map(p=>({ rating:1200, games:0, wins:0, ...p }));
+      }catch(e){ return STARTERS.map(s=>({...s, rating:1200, games:0, wins:0})); }
+    }
+    function saveProfiles(list){ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+
+    function expectedScore(rA, rB){ return 1/(1+Math.pow(10,(rB-rA)/400)); }
+    function updateElo(pA, pB, winner, K=32){
+      const EA = expectedScore(pA.rating, pB.rating);
+      const EB = expectedScore(pB.rating, pA.rating);
+      const sA = winner==="A" ? 1 : 0;
+      const sB = winner==="A" ? 0 : 1;
+      const newA = {...pA, rating: Math.round(pA.rating + K*(sA-EA)), games:pA.games+1, wins:pA.wins+(sA?1:0)};
+      const newB = {...pB, rating: Math.round(pB.rating + K*(sB-EB)), games:pB.games+1, wins:pB.wins+(sB?1:0)};
+      return [newA,newB];
+    }
+
+    function nextPair(list, exclude=[]){
+      if(list.length<2) return [null,null];
+      const ids = list.map(p=>p.id).filter(id=>!exclude.includes(id));
+      if(ids.length<2) return [null,null];
+      let a=null,b=null;
+      while(!a || !b || a.id===b.id){
+        a=list.find(p=>p.id===ids[Math.floor(Math.random()*ids.length)]);
+        b=list.find(p=>p.id===ids[Math.floor(Math.random()*ids.length)]);
+      }
+      return [a,b];
+    }
+
+    // ======= State =======
+    let profiles = loadProfiles();
+    let A=null, B=null;
+    let cooldown=false;
+
+    const els = {
+      tabs: document.querySelectorAll(".tab"),
+      sections: {
+        play: document.getElementById("tab-play"),
+        leaderboard: document.getElementById("tab-leaderboard"),
+        add: document.getElementById("tab-add")
+      },
+      imgA: document.getElementById("imgA"),
+      imgB: document.getElementById("imgB"),
+      nameA: document.getElementById("nameA"),
+      nameB: document.getElementById("nameB"),
+      eloA: document.getElementById("eloA"),
+      eloB: document.getElementById("eloB"),
+      gamesA: document.getElementById("gamesA"),
+      gamesB: document.getElementById("gamesB"),
+      winsA: document.getElementById("winsA"),
+      winsB: document.getElementById("winsB"),
+      voteLeft: document.getElementById("voteLeft"),
+      voteRight: document.getElementById("voteRight"),
+      leaderRows: document.getElementById("leaderRows"),
+      countProfiles: document.getElementById("countProfiles"),
+      addForm: document.getElementById("addForm"),
+      cancelAdd: document.getElementById("cancelAdd"),
+      resetBtn: document.getElementById("resetBtn"),
+      yr: document.getElementById("yr")
+    };
+
+    function renderPair(){
+      if(!A || !B) return;
+      els.imgA.src = A.img; els.imgA.alt = A.name;
+      els.imgB.src = B.img; els.imgB.alt = B.name;
+      els.nameA.textContent = A.name; els.nameB.textContent = B.name;
+      els.eloA.textContent = A.rating; els.eloB.textContent = B.rating;
+      els.gamesA.textContent = A.games; els.gamesB.textContent = B.games;
+      els.winsA.textContent = A.wins; els.winsB.textContent = B.wins;
+    }
+
+    function rerollPair(excludeSame=true){
+      const exclude = excludeSame && A && B ? [A.id,B.id] : [];
+      const [na, nb] = nextPair(profiles, exclude);
+      A = na; B = nb; renderPair();
+    }
+
+    function renderLeaderboard(){
+      const list = [...profiles].sort((x,y)=>y.rating-x.rating);
+      els.countProfiles.textContent = list.length;
+      els.leaderRows.innerHTML = "";
+      list.forEach((p,i)=>{
+        const row = document.createElement("div");
+        row.className="rowline";
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="rank">${i+1}</div>
+            <img class="avatar" src="${p.img}" alt="${p.name}">
+            <div>
+              <div style="font-weight:600">${p.name}</div>
+              <div class="muted">O'yinlar: ${p.games} · G'alaba: ${p.wins}</div>
+            </div>
+          </div>
+          <div class="pill">${p.rating}</div>
+        `;
+        const del = document.createElement("button");
+        del.textContent = "O'chirish";
+        del.className = "tab";
+        del.onclick = () => {
+          profiles = profiles.filter(x=>x.id!==p.id);
+          saveProfiles(profiles);
+          rerollPair(false);
+          renderLeaderboard();
+        };
+        row.appendChild(del);
+        els.leaderRows.appendChild(row);
+      });
+    }
+
+    function switchTab(name){
+      ["play","leaderboard","add"].forEach(t=>{
+        els.sections[t].style.display = (t===name) ? "" : "none";
+        document.querySelector(`.tab[data-tab="${t}"]`)?.classList.toggle("active", t===name);
+      });
+      if(name==="leaderboard") renderLeaderboard();
+      if(name==="play") rerollPair(false);
+    }
+
+    // Events
+    els.voteLeft.addEventListener("click", ()=>{
+      if(cooldown || !A || !B) return;
+      cooldown = true;
+      const [nA,nB] = updateElo(A,B,"A");
+      profiles = profiles.map(p => p.id===nA.id? nA : p.id===nB.id? nB : p);
+      saveProfiles(profiles);
+      setTimeout(()=>{ rerollPair(true); cooldown=false; }, 200);
+    });
+    els.voteRight.addEventListener("click", ()=>{
+      if(cooldown || !A || !B) return;
+      cooldown = true;
+      const [nA,nB] = updateElo(A,B,"B");
+      profiles = profiles.map(p => p.id===nA.id? nA : p.id===nB.id? nB : p);
+      saveProfiles(profiles);
+      setTimeout(()=>{ rerollPair(true); cooldown=false; }, 200);
+    });
+
+    els.addForm.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      const name = String(fd.get("name")||"").trim();
+      const img = String(fd.get("img")||"").trim();
+      if(!name || !img){ alert("Ism va rasm URL ni kiriting"); return; }
+      const fresh = { id: String(Date.now()), name, img, rating:1200, games:0, wins:0 };
+      profiles = [...profiles, fresh];
+      saveProfiles(profiles);
+      e.currentTarget.reset();
+      switchTab("play");
+    });
+    els.cancelAdd.addEventListener("click", ()=>switchTab("play"));
+
+    els.resetBtn.addEventListener("click", ()=>{
+      if(!confirm("Barchasini reset qilaymi? Reytinglar o'chadi.")) return;
+      profiles = STARTERS.map(s=>({...s, rating:1200, games:0, wins:0}));
+      saveProfiles(profiles);
+      rerollPair(false);
+      if(document.querySelector('.tab.active')?.dataset.tab==="leaderboard") renderLeaderboard();
+    });
+
+    document.querySelectorAll('.tab[data-tab]').forEach(btn=>{
+      btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+    });
+
+    // Init
+    document.getElementById("yr").textContent = new Date().getFullYear();
+    const [a,b] = nextPair(profiles);
+    A=a; B=b; renderPair();
+  </script>
+</body>
+</html>
